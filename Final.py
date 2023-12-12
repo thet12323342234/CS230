@@ -1,7 +1,19 @@
+"""
+Class: CS230--Section 3
+Name: Leo Susi
+Description: Below I have completed my final project using Streamlit, data analytics, and previously covered materials.
+I used resources from https://bluebikes.com/system-data to better understand the data that I was manipulating throughout the project
+I pledge that I have completed the programming assignment
+independently.
+I have not copied the code from a student or any source.
+I have not given my code to any student.
+"""
+
+
 import streamlit as st                                                                              # Import the Streamlit library for creating the web app
 import pandas as pd                                                                                 # Import the Pandas library for data manipulation
 import matplotlib.pyplot as plt                                                                     # Import Matplotlib for data visualization
-
+from PIL import Image
 
 @st.cache_data                                                                                      # Decorator to cache the result of this function
 def load_data():                                                                                    # Function to load data
@@ -62,7 +74,7 @@ def plot_top_stations_by_name(station_usage):                                   
 def plot_top_stations(station_usage, station_ids, bluebike_stations):                               # Function to plot pie chart for top stations by ID
     plt.figure(figsize=(8, 8))
 
-    bluebike_stations['Number'] = bluebike_stations['Number'].astype(str)                           # Convert all station IDs to strings for consistent mapping
+    bluebike_stations['Number'] = bluebike_stations['Number'].astype(str)                           # Here is something intresting I did. I decided to figure out how to use astype to convert all station IDs to strings allowing consistent mapping. Then I use a dictionary to map the station ID's to their corresponding name.
 
     print("Station IDs in 'bluebike_stations':", bluebike_stations['Number'].tolist())              # Diagnostic print to check alignment
     print("Station IDs in 'tripdata' being plotted:", station_ids.tolist())
@@ -82,8 +94,9 @@ def main():                                                                     
 
     bluebike_stations.rename(columns={'Latitude': 'lat', 'Longitude': 'lon'}, inplace=True)         # Rename columns for Streamlit map compatibility
 
-    st.title('Final Project By: Leo Susi- Bluebike Stations and Trip Analysis')                     # Streamlit app name
-
+    st.title('Final Project: Bluebike Stations and Trip Analysis')                                  # Streamlit app name
+    img = Image.open("download.jpg")
+    st.image(img)
     selected_tab = st.sidebar.radio("Navigation", ["Text Questions", "Charts and Graphs", "Map"])   # Sidebar with tabs
 
     if selected_tab == "Text Questions":                                                            # Add a section to ask the user for the station name
@@ -249,7 +262,18 @@ def main():                                                                     
     elif selected_tab == "Map":
         st.title('Bluebike Stations Map')
         st.write('Here is a map displaying all of the stations with data points within the greater Boston, MA area.')
-        st.map(bluebike_stations[['lat', 'lon']])
+        map_data = bluebike_stations[['Name', 'lat', 'lon']]
+        st.map(map_data)
+
+        # Display station information when a marker is selected
+        station_selection = st.selectbox("Select a Station:", bluebike_stations['Name'])
+
+        if station_selection:
+            selected_station = bluebike_stations[bluebike_stations['Name'] == station_selection]
+            st.subheader(f"Station Information for {station_selection}")
+            st.write("Station Name:", selected_station['Name'].values[0])
+            st.write("Latitude:", selected_station['lat'].values[0])
+            st.write("Longitude:", selected_station['lon'].values[0])
 
 if __name__ == '__main__':
     main()
