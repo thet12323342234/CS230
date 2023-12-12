@@ -1,1 +1,1 @@
-# CS230
+# My name is Leo Susi. This is my Final Project for CS230 using Python. I use data from Boston BlueBikes along with a variety of topics covered over the course of the semester to display graphs, charts, maps and allow the user to interact with the program
