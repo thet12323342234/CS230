@@ -9,11 +9,11 @@ I have not copied the code from a student or any source.
 I have not given my code to any student.
 """
 
-
 import streamlit as st                                                                              # Import the Streamlit library for creating the web app
 import pandas as pd                                                                                 # Import the Pandas library for data manipulation
 import matplotlib.pyplot as plt                                                                     # Import Matplotlib for data visualization
 from PIL import Image
+
 
 @st.cache_data                                                                                      # Decorator to cache the result of this function
 def load_data():                                                                                    # Function to load data
@@ -21,8 +21,10 @@ def load_data():                                                                
     tripdata = pd.read_csv('hubway-tripdata.csv')
     return bluebike_stations, tripdata                                                              # Return loaded data
 
+
 def get_top_bikes(tripdata, top_n=10):                                                              # Function to get top bike usage data
     return tripdata['bikeid'].value_counts().head(top_n)
+
 
 def plot_top_bikes(top_bikes):                                                                      # Function to plot bar chart for top bikes
     plt.figure(figsize=(10, 6))                                                                     # Create a bar chart to display top bike usage
@@ -34,10 +36,13 @@ def plot_top_bikes(top_bikes):                                                  
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     return plt
 
+
 def get_user_type_count(tripdata):                                                                  # Function to get user type count (subscribers vs customers)
     return pd.DataFrame(tripdata['usertype'].value_counts()).rename(columns={'usertype': 'count'})
 
-def plot_user_type_count(user_type_count, show_subscribers=True, show_customers=True):              # Updated function to plot user type count (subscribers vs customers)
+
+def plot_user_type_count(user_type_count, show_subscribers=True,
+                         show_customers=True):                                                      # Updated function to plot user type count (subscribers vs customers)
     plt.figure(figsize=(8, 5))                                                                      # Create a bar chart to display user type count
 
     if show_subscribers and show_customers:                                                         # Check and plot based on user selection
@@ -55,15 +60,18 @@ def plot_user_type_count(user_type_count, show_subscribers=True, show_customers=
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     return plt
 
+
 def get_station_usage(tripdata, top_n=3):                                                           # Function to calculate top start and stop station usage
     top_start_stations = tripdata['start station id'].value_counts().head(top_n)
     top_stop_stations = tripdata['end station id'].value_counts().head(top_n)
     return top_start_stations, top_stop_stations
 
+
 def get_station_usage_by_name(tripdata, top_n=3):                                                   # Function to calculate top start and stop station usage by name
     top_start_station_names = tripdata['start station name'].value_counts().head(top_n)
     top_stop_station_names = tripdata['end station name'].value_counts().head(top_n)
     return top_start_station_names, top_stop_station_names
+
 
 def plot_top_stations_by_name(station_usage):                                                       # Function to plot pie chart for top stations by name
     plt.figure(figsize=(8, 8))
@@ -71,12 +79,15 @@ def plot_top_stations_by_name(station_usage):                                   
     plt.title('Top 3 Bike Stations by Usage')
     return plt
 
-def plot_top_stations(station_usage, station_ids, bluebike_stations):                               # Function to plot pie chart for top stations by ID
+
+def plot_top_stations(station_usage, station_ids,
+                      bluebike_stations):                                                           # Function to plot pie chart for top stations by ID
     plt.figure(figsize=(8, 8))
 
     bluebike_stations['Number'] = bluebike_stations['Number'].astype(str)                           # Here is something intresting I did. I decided to figure out how to use astype to convert all station IDs to strings allowing consistent mapping. Then I use a dictionary to map the station ID's to their corresponding name.
 
-    print("Station IDs in 'bluebike_stations':", bluebike_stations['Number'].tolist())              # Diagnostic print to check alignment
+    print("Station IDs in 'bluebike_stations':",
+          bluebike_stations['Number'].tolist())                                                     # Diagnostic print to check alignment
     print("Station IDs in 'tripdata' being plotted:", station_ids.tolist())
 
     station_id_to_name = dict(zip(bluebike_stations['Number'], bluebike_stations['Name']))          # Map station IDs to names
@@ -86,37 +97,47 @@ def plot_top_stations(station_usage, station_ids, bluebike_stations):           
     plt.title('Top 3 Bike Stations by Usage')
     return plt
 
+
 def get_station_rankings(bluebike_stations):                                                        # Function to get and display station rankings based on docking ports
     return bluebike_stations.sort_values(by='Total docks', ascending=False)
 
-def main():                                                                                         # The main function where the Streamlit web app is defined
-    bluebike_stations, tripdata = load_data()                                                       # Load data using the cached function
 
-    bluebike_stations.rename(columns={'Latitude': 'lat', 'Longitude': 'lon'}, inplace=True)         # Rename columns for Streamlit map compatibility
+def main():
+    bluebike_stations, tripdata = load_data()
 
-    st.title('Final Project: Bluebike Stations and Trip Analysis')                                  # Streamlit app name
+    bluebike_stations.rename(columns={'Latitude': 'lat', 'Longitude': 'lon'}, inplace=True)
+
+    st.title('Final Project: Bluebike Stations and Trip Analysis')
+    st.subheader('By: Leo Susi')
     img = Image.open("download.jpg")
     st.image(img)
-    selected_tab = st.sidebar.radio("Navigation", ["Text Questions", "Charts and Graphs", "Map"])   # Sidebar with tabs
+    selected_tab = st.sidebar.radio("Navigation", ["Text Questions", "Charts and Graphs", "Map"])
 
-    if selected_tab == "Text Questions":                                                            # Add a section to ask the user for the station name
-        st.subheader('Most Used Bike Time for a Station')
-        st.write('Here you must enter the the bike station name according to the data in the hubway-tripdata file.')
-        station_name_input = st.text_input('Enter the station name:', key='most_used_bike_station')
+    if selected_tab == "Text Questions":
+        st.subheader('Most Popular Start Station on a Specific Date')
+        st.write('This input allows the user to add the date and outputs the most popular starting station on the selected day.')
 
-        if station_name_input:                                                                      # Filter tripdata to select rows where the start station name matches the user input
-            filtered_trips = tripdata[tripdata['start station name'] == station_name_input]
+        entered_date = st.text_input('Enter a date (YYYY-MM-DD):', key='date_input')
 
-            if not filtered_trips.empty:                                                            # Calculate the most used bike time for the selected station
-                most_used_time = filtered_trips['starttime'].mode().iloc[0]
-
-                st.write(f"The most used bike time for station '{station_name_input}' is: {most_used_time}")
+        if entered_date:
+            try:
+                selected_date = pd.to_datetime(entered_date)
+            except ValueError:
+                st.write('Please enter a valid date in the format YYYY-MM-DD.')
             else:
-                st.write(f"No data found for station '{station_name_input}'")
+                filtered_trips = tripdata[tripdata['starttime'].str.startswith(str(selected_date.date()))]
+
+                if not filtered_trips.empty:
+                    most_popular_start_station = filtered_trips['start station name'].mode().iloc[0]
+
+                    st.write(f"The most popular start station on {selected_date.date()} was {most_popular_start_station}.")
+                else:
+                    st.write(f"No data found for {selected_date.date()}.")
+
 
         st.subheader('Longest Trip Starting from a Station')                                        # Add another section to ask for the longest trip
-        st.write('Here you must enter the the bike station name according to the data in the hubway-tripdata file.'
-                 'This will produce the longest trip for the specified station.')
+        st.write('Here you must enter the the bike station name according to the data in the hubway-tripdata file. '
+                 'This will produce the longest trip for the specified station along with telling the user the end station.')
         station_name_input2 = st.text_input('Enter the station name for the longest trip:', key='longest_trip_station')
 
         if station_name_input2:                                                                     # Filter tripdata to select rows where the start station name matches the user input
@@ -133,17 +154,17 @@ def main():                                                                     
 
                     end_station = longest_trip.iloc[0]['end station name']
 
-                    st.write(f"The longest trip starting from station '{station_name_input2}' is "
+                    st.write(f"The longest trip starting from station {station_name_input2} is "
                              f"{trip_duration_hours} hours, {trip_duration_minutes} minutes, "
                              f"and {trip_duration_seconds_remainder} seconds long, "
-                             f"and it ends at station '{end_station}'.")
+                             f"and it ends at station {end_station}.")
                 else:
-                    st.write(f"No data found for the longest trip starting from station '{station_name_input2}'.")
+                    st.write(f"No data found for the longest trip starting from station {station_name_input2}.")
             else:
-                st.write(f"No data found for station '{station_name_input2}'")
+                st.write(f"No data found for station {station_name_input2}.")
 
         st.subheader('Last Usage of a Bike')                                                        # Add another section to ask for the last usage of a bike
-        st.write('The user can enter the bike ID which is desired. It will then display the most popular time of which the '
+        st.write('The user can enter the desired bike ID. It will then display the time and date of which the '
                  'specified bike was last used.')
         bike_id_input = st.text_input('Enter the bike ID:', key='last_usage_bike_id')
 
@@ -166,44 +187,47 @@ def main():                                                                     
                             last_usage_time = last_usage.iloc[0]['stoptime'].split()[1]
 
                             st.write(
-                                f"The bike with ID '{bike_id}' was last used on {last_usage_date} with a trip end time at {last_usage_time}.")
+                                f"The bike with ID {bike_id} was last used on {last_usage_date} with a trip end time at {last_usage_time}.")
                         else:
-                            st.write(f"No data found for the bike with ID '{bike_id}'.")
+                            st.write(f"No data found for the bike with ID {bike_id}.")
                     else:
-                        st.write(f"No data found for the bike with ID '{bike_id}'.")
+                        st.write(f"No data found for the bike with ID {bike_id}.")
 
-        st.subheader('Last Location of a Bike at a Station')                                        # Add another section to ask for the last location of a bike at a station
+        st.subheader('Last Time a Bike ID Was Started at a Station')
         st.write(
-            "The user can input the bike ID, and it will display which station the bike was last used, along with the date,"
-            "and the end time of the bike's use")
-        bike_id_input = st.text_input('Enter the bike ID:', key='last_location_bike_id')
-        station_name_input = st.text_input('Enter the station name:', key='last_location_station_name')
+            "The user can input the bike ID and station name, and it will display the last time the bike was started at that station.")
 
-        if st.button('Retrieve Last Location'):
-            if bike_id_input and station_name_input:                                                # Convert the input to an integer (assuming bike IDs are integers)
+        bike_id_input = st.text_input('Enter the bike ID:', key='last_time_bike_id')
+        station_name_input = st.text_input('Enter the station name:', key='last_time_station_name')
+
+        if st.button('Retrieve Last Time'):
+            if not bike_id_input:
+                st.write('Please enter a bike ID.')
+            elif not station_name_input:
+                st.write('Please enter a station name.')
+            else:
                 try:
                     bike_id = int(bike_id_input)
                 except ValueError:
                     st.write('Please enter a valid bike ID (an integer).')
-                else:                                                                               # Filter tripdata to select rows where the bike ID and station name match the user input
+                else:
                     filtered_trips = tripdata[
-                        (tripdata['bikeid'] == bike_id) & (tripdata['end station name'] == station_name_input)]
+                        (tripdata['bikeid'] == bike_id) & (tripdata['start station name'] == station_name_input)]
 
-                    if not filtered_trips.empty:                                                    # Convert 'stoptime' column to datetime format
-                        filtered_trips['stoptime'] = pd.to_datetime(filtered_trips['stoptime'])
+                    if not filtered_trips.empty:
+                        filtered_trips['starttime'] = pd.to_datetime(filtered_trips['starttime'])
 
-                        last_location = filtered_trips.nlargest(1, 'stoptime')                      # Find the last location of the bike at the specified station
+                        last_time = filtered_trips.nlargest(1, 'starttime')
 
-                        if not last_location.empty:                                                 # Display the date and time when the bike was last located at the station to the user
-                            last_location_date = last_location.iloc[0]['stoptime'].strftime('%Y-%m-%d')
-                            last_location_time = last_location.iloc[0]['stoptime'].strftime('%H:%M:%S')
+                        if not last_time.empty:
+                            last_time_date = last_time.iloc[0]['starttime'].strftime('%Y-%m-%d')
+                            last_time_time = last_time.iloc[0]['starttime'].strftime('%H:%M:%S')
 
-                            st.write(
-                                f"The bike with ID '{bike_id}' was last located at station '{station_name_input}' on {last_location_date} at {last_location_time}.")
+                            st.write(f"The bike with ID {bike_id} was last started at station {station_name_input} on {last_time_date} at {last_time_time}.")
                         else:
-                            st.write(f"No data found for the bike with ID '{bike_id}' at station '{station_name_input}'.")
+                            st.write(f"No data found for the bike with ID {bike_id} at station {station_name_input}.")
                     else:
-                        st.write(f"No data found for the bike with ID '{bike_id}' at station '{station_name_input}'.")
+                        st.write(f"No data found for the bike with ID {bike_id} at station {station_name_input}.")
 
     elif selected_tab == "Charts and Graphs":
         st.title('Charts and Graphs')                                                               # Add a section to display the top bike usage chart
@@ -225,14 +249,16 @@ def main():                                                                     
             fig2 = plot_user_type_count(user_type_count, show_subscribers, show_customers)
             st.pyplot(fig2)
 
-        st.subheader('Top Start Stations')                                                          # Add sliders for top start stations
-        num_sites_start = st.slider('Select the number of top start stations to display', min_value=1, max_value=10, value=3)
+        st.subheader('Top Start Stations')  # Add sliders for top start stations
+        num_sites_start = st.slider('Select the number of top start stations to display', min_value=1, max_value=10,
+                                    value=3)
         start_station_names, stop_station_names = get_station_usage_by_name(tripdata, top_n=num_sites_start)
         fig_start_by_name = plot_top_stations_by_name(start_station_names)
         st.pyplot(fig_start_by_name)
 
         st.subheader('Top Stop Stations')                                                           # Add sliders for top stop stations
-        num_sites_end = st.slider('Select the number of top stop stations to display', min_value=1, max_value=10, value=3)
+        num_sites_end = st.slider('Select the number of top stop stations to display', min_value=1, max_value=10,
+                                  value=3)
         stop_station_names = get_station_usage_by_name(tripdata, top_n=num_sites_end)[1]            # Assign only the second value (stop_station_names)
         fig_stop_by_name = plot_top_stations_by_name(stop_station_names)
         st.pyplot(fig_stop_by_name)
@@ -242,7 +268,8 @@ def main():                                                                     
 
         tripdata['starttime'] = pd.to_datetime(tripdata['starttime'])                               # Convert 'starttime' column to datetime format
 
-        bike_usage_by_date = tripdata.groupby(tripdata['starttime'].dt.date).size()                 # Group trips by date and count the number of trips on each date
+        bike_usage_by_date = tripdata.groupby(
+            tripdata['starttime'].dt.date).size()                                                   # Group trips by date and count the number of trips on each date
 
         plt.figure(figsize=(12, 6))                                                                 # Plot the line graph
         plt.plot(bike_usage_by_date.index, bike_usage_by_date.values, marker='o', linestyle='-', color='blue')
@@ -259,21 +286,33 @@ def main():                                                                     
         station_rankings = get_station_rankings(bluebike_stations)
         st.dataframe(station_rankings[['Name', 'Total docks']])
 
+
     elif selected_tab == "Map":
+
         st.title('Bluebike Stations Map')
+
         st.write('Here is a map displaying all of the stations with data points within the greater Boston, MA area.')
-        map_data = bluebike_stations[['Name', 'lat', 'lon']]
-        st.map(map_data)
 
-        # Display station information when a marker is selected
-        station_selection = st.selectbox("Select a Station:", bluebike_stations['Name'])
+        station_selection = st.selectbox("Select a Station:", ['All Stations'] + list(bluebike_stations['Name']))
+        if station_selection == 'All Stations':                                                     # Display all stations on the map
 
-        if station_selection:
+            st.map(bluebike_stations[['lat', 'lon']])
+
+        elif station_selection:                                                                     # Filter the station data based on the user's selection
+
             selected_station = bluebike_stations[bluebike_stations['Name'] == station_selection]
+
+            selected_station = selected_station.rename(columns={'lat': 'LATITUDE', 'lon': 'LONGITUDE'})
+
+            st.map(selected_station)                                                                # Center the map on the selected station's coordinates
+
             st.subheader(f"Station Information for {station_selection}")
+
             st.write("Station Name:", selected_station['Name'].values[0])
-            st.write("Latitude:", selected_station['lat'].values[0])
-            st.write("Longitude:", selected_station['lon'].values[0])
+            st.write("Latitude:", selected_station['LATITUDE'].values[0])
+            st.write("Longitude:", selected_station['LONGITUDE'].values[0])
+
 
 if __name__ == '__main__':
     main()
+
