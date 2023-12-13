@@ -291,8 +291,9 @@ def main():
 
         st.title('Bluebike Stations Map')
 
-        st.write('Here is a map displaying all of the stations with data points within the greater Boston, MA area.')
-
+        st.write('Here is a map displaying all of the stations with data points within the greater Boston, MA area. '
+                 'You can use the drop-down tab to select a certain station. ')
+        
         station_selection = st.selectbox("Select a Station:", ['All Stations'] + list(bluebike_stations['Name']))
         if station_selection == 'All Stations':                                                     # Display all stations on the map
 
